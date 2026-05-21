@@ -1,0 +1,9 @@
+Speech Emotion Recognition Results
+
+Model 1:
+CNN + LSTM
+Accuracy: 98.75%
+
+Model 2:
+CNN + BiLSTM + BatchNorm + Dropout
+Accuracy: 99%+

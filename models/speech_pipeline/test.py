@@ -110,5 +110,5 @@ fig, ax = plt.subplots(figsize=(10, 10))
 disp.plot(ax=ax)
 
 plt.title("Speech Emotion Confusion Matrix")
-
+plt.savefig("../../Results/confusion_matrix.png")
 plt.show()
