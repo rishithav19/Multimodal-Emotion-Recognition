@@ -20,7 +20,6 @@ Built with [PyTorch](https://pytorch.org) Â· [Streamlit](https://streamlit.io) Â
 |----------|-------|
 | Total samples | 2,800 |
 | Emotion classes | 7 |
-| Speakers | 2 female actors (ages 26 and 64) |
 | Train / Val / Test | 80% / 10% / 10% |
 | Class balance | Perfectly balanced (400 samples per class) |
 
