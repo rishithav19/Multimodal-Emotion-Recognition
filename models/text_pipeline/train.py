@@ -1,16 +1,17 @@
 import torch
+
 from torch.utils.data import DataLoader
-from dataset import TESSDataset
-from model import SpeechEmotionModel
+
+from dataset import TextEmotionDataset
+from model import TextEmotionModel
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 print("Using device:", device)
 
-dataset = TESSDataset("../../data/TESS")
+dataset = TextEmotionDataset("../../data/TESS")
 
-
-# Dataset Split
 train_size = int(0.7 * len(dataset))
 val_size = int(0.15 * len(dataset))
 test_size = len(dataset) - train_size - val_size
@@ -20,8 +21,6 @@ train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(
     [train_size, val_size, test_size]
 )
 
-
-# DataLoaders
 train_loader = DataLoader(
     train_dataset,
     batch_size=16,
@@ -33,43 +32,23 @@ val_loader = DataLoader(
     batch_size=16
 )
 
-test_loader = DataLoader(
-    test_dataset,
-    batch_size=16
-)
+model = TextEmotionModel().to(device)
 
-
-# Model
-model = SpeechEmotionModel().to(device)
-
-
-# Loss Function
 criterion = torch.nn.CrossEntropyLoss()
 
-
-# Optimizer
 optimizer = torch.optim.Adam(
     model.parameters(),
-    lr=0.001
+    lr=2e-5
 )
 
-
-# Early Stopping Variables
 best_val_loss = float("inf")
 
-patience = 5
+patience = 3
 
 counter = 0
 
-# Training History
-train_losses = []
-val_losses = []
-train_accuracies = []
+epochs = 10
 
-epochs = 30
-
-
-# Training Loop
 for epoch in range(epochs):
 
     model.train()
@@ -79,14 +58,18 @@ for epoch in range(epochs):
     correct = 0
     total = 0
 
-    for features, labels in train_loader:
+    for batch in train_loader:
 
-        features = features.to(device)
-        labels = labels.to(device)
+        input_ids = batch["input_ids"].to(device)
+        attention_mask = batch["attention_mask"].to(device)
+        labels = batch["label"].to(device)
 
         optimizer.zero_grad()
 
-        outputs = model(features)
+        outputs = model(
+            input_ids,
+            attention_mask
+        )
 
         loss = criterion(outputs, labels)
 
@@ -104,28 +87,26 @@ for epoch in range(epochs):
 
     train_accuracy = 100 * correct / total
 
-    train_losses.append(running_loss)
-    train_accuracies.append(train_accuracy)
-
-    # Validation Phase
     model.eval()
 
     val_loss = 0
 
     with torch.no_grad():
 
-        for features, labels in val_loader:
+        for batch in val_loader:
 
-            features = features.to(device)
-            labels = labels.to(device)
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
+            labels = batch["label"].to(device)
 
-            outputs = model(features)
+            outputs = model(
+                input_ids,
+                attention_mask
+            )
 
             loss = criterion(outputs, labels)
 
             val_loss += loss.item()
-
-    val_losses.append(val_loss)
 
     print(
         f"Epoch [{epoch+1}/{epochs}] "
@@ -134,18 +115,18 @@ for epoch in range(epochs):
         f"Val Loss: {val_loss:.4f}"
     )
 
-    # Save Best Model
     if val_loss < best_val_loss:
 
         best_val_loss = val_loss
 
         torch.save(
             model.state_dict(),
-            "best_speech_model.pth"
+            "best_text_model.pth"
         )
 
         counter = 0
 
+        print("Best model saved!")
 
     else:
 
@@ -153,12 +134,5 @@ for epoch in range(epochs):
 
         print(f"No improvement count: {counter}")
 
-    # Early Stopping
-    if counter >= patience:
-
-        print("Early stopping triggered!")
-
-        break
-
-
+     
 print("Training complete!")

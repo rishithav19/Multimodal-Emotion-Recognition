@@ -216,3 +216,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+__pycache__/
+*.pyc
+
+uploaded_temp.wav
+
+
+*.pth
+*.pt

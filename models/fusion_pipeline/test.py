@@ -9,8 +9,8 @@ from sklearn.metrics import (
 
 from torch.utils.data import DataLoader
 
-from dataset import TESSDataset
-from model import SpeechEmotionModel
+from dataset import FusionDataset
+from model import FusionEmotionModel
 
 
 emotion_names = [
@@ -25,7 +25,7 @@ emotion_names = [
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-dataset = TESSDataset("../../data/TESS")
+dataset = FusionDataset("../../data/TESS")
 
 train_size = int(0.7 * len(dataset))
 val_size = int(0.15 * len(dataset))
@@ -41,11 +41,11 @@ test_loader = DataLoader(
     batch_size=16
 )
 
-model = SpeechEmotionModel().to(device)
+model = FusionEmotionModel().to(device)
 
 model.load_state_dict(
     torch.load(
-        "best_speech_model.pth",
+        "best_fusion_model.pth",
         map_location=device
     )
 )
@@ -60,12 +60,21 @@ total = 0
 
 with torch.no_grad():
 
-    for features, labels in test_loader:
+    for batch in test_loader:
 
-        features = features.to(device)
-        labels = labels.to(device)
+        speech = batch["speech"].to(device)
 
-        outputs = model(features)
+        input_ids = batch["input_ids"].to(device)
+
+        attention_mask = batch["attention_mask"].to(device)
+
+        labels = batch["label"].to(device)
+
+        outputs = model(
+            speech,
+            input_ids,
+            attention_mask
+        )
 
         _, predicted = torch.max(outputs, 1)
 
@@ -101,8 +110,8 @@ fig, ax = plt.subplots(figsize=(10, 10))
 
 disp.plot(ax=ax)
 
-plt.title("Speech Emotion Confusion Matrix")
+plt.title("Fusion Confusion Matrix")
 
-plt.savefig("../../Results/confusion_matrix.png")
+plt.savefig("../../Results/fusion_confusion_matrix.png")
 
 plt.show()
